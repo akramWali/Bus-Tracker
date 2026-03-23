@@ -3,9 +3,9 @@ import { GetNextBusesResponse } from "@workspace/api-zod";
 
 const router: IRouter = Router();
 
-const STOP_ID = "STIF:StopPoint:Q:43135:";
 const LINE_ID = "STIF:Line::C01797:";
-const IDFM_API_URL = "https://api.iledefrance-mobilites.fr/marketplace/stop-monitoring";
+const STOP_FILTER = "Résistance";
+const IDFM_API_URL = "https://prim.iledefrance-mobilites.fr/marketplace/estimated-timetable";
 
 router.get("/bus/next", async (req, res) => {
   const apiKey = process.env["IDFM_API_KEY"];
@@ -16,9 +16,7 @@ router.get("/bus/next", async (req, res) => {
   }
 
   const url = new URL(IDFM_API_URL);
-  url.searchParams.set("MonitoringRef", STOP_ID);
   url.searchParams.set("LineRef", LINE_ID);
-  url.searchParams.set("MaximumStopVisits", "5");
 
   let upstreamRes: Response;
   try {
@@ -27,7 +25,7 @@ router.get("/bus/next", async (req, res) => {
       signal: AbortSignal.timeout(10000),
     });
   } catch (err) {
-    req.log.error({ err }, "Failed to fetch from IDFM API");
+    req.log.error({ err }, "Failed to fetch from IDFM estimated-timetable API");
     res.status(502).json({ error: "Failed to reach upstream API" });
     return;
   }
@@ -47,62 +45,85 @@ router.get("/bus/next", async (req, res) => {
     return;
   }
 
-  let visits: any[] = [];
-  let stopName = "Place de la Résistance";
+  const now = new Date();
+  const departures: Array<{
+    expectedArrivalTime: string;
+    minutesUntilArrival: number;
+    destination: string;
+    formattedTime: string;
+    vehicleRef: string;
+  }> = [];
 
   try {
-    const siri = (data as any)?.Siri?.ServiceDelivery?.StopMonitoringDelivery?.[0];
-    if (siri) {
-      visits = siri.MonitoredStopVisit ?? [];
-      const firstVisit = visits[0];
-      if (firstVisit) {
-        const monitoredName = firstVisit?.MonitoredVehicleJourney?.MonitoredCall?.StopPointName?.[0]?.value;
-        if (monitoredName) stopName = monitoredName;
+    const deliveries: any[] =
+      (data as any)?.Siri?.ServiceDelivery?.EstimatedTimetableDelivery ?? [];
+
+    for (const delivery of deliveries) {
+      const frames: any[] = delivery?.EstimatedJourneyVersionFrame ?? [];
+
+      for (const frame of frames) {
+        const vehicleJourneys: any[] = frame?.EstimatedVehicleJourney ?? [];
+
+        for (const vj of vehicleJourneys) {
+          const destination: string =
+            vj?.DestinationName?.[0]?.value ?? "Inconnu";
+          const vehicleRef: string = vj?.VehicleRef?.value ?? "";
+          const calls: any[] = vj?.EstimatedCalls?.EstimatedCall ?? [];
+
+          for (const call of calls) {
+            const stopName: string =
+              call?.StopPointName?.[0]?.value ?? "";
+
+            if (!stopName.includes(STOP_FILTER)) continue;
+
+            const timeStr: string =
+              call?.ExpectedArrivalTime ??
+              call?.AimedArrivalTime ??
+              call?.ExpectedDepartureTime ??
+              call?.AimedDepartureTime ??
+              "";
+
+            if (!timeStr) continue;
+
+            const arrival = new Date(timeStr);
+
+            // Skip departures more than 2 minutes in the past
+            if ((arrival.getTime() - now.getTime()) / 60000 < -2) continue;
+
+            const minutesUntilArrival = Math.round(
+              (arrival.getTime() - now.getTime()) / 60000
+            );
+            const formattedTime = arrival.toLocaleTimeString("fr-FR", {
+              hour: "2-digit",
+              minute: "2-digit",
+              timeZone: "Europe/Paris",
+            });
+
+            departures.push({
+              expectedArrivalTime: timeStr,
+              minutesUntilArrival,
+              destination,
+              formattedTime,
+              vehicleRef,
+            });
+          }
+        }
       }
     }
   } catch (err) {
-    req.log.warn({ err }, "Could not parse stop visits from IDFM response");
+    req.log.warn({ err }, "Could not parse estimated timetable from IDFM response");
   }
 
-  const now = new Date();
-
-  const departures = visits.map((visit: any) => {
-    const journey = visit?.MonitoredVehicleJourney;
-    const destination: string = journey?.DestinationName?.[0]?.value ?? "Inconnu";
-    const timeStr: string =
-      journey?.MonitoredCall?.ExpectedArrivalTime ??
-      journey?.MonitoredCall?.AimedArrivalTime ??
-      journey?.MonitoredCall?.ExpectedDepartureTime ??
-      journey?.MonitoredCall?.AimedDepartureTime ??
-      "";
-    const vehicleRef: string = journey?.VehicleRef?.value ?? "";
-
-    let expectedArrivalTime = timeStr;
-    let minutesUntilArrival = 0;
-    let formattedTime = "--:--";
-
-    if (timeStr) {
-      const arrival = new Date(timeStr);
-      minutesUntilArrival = Math.round((arrival.getTime() - now.getTime()) / 60000);
-      formattedTime = arrival.toLocaleTimeString("fr-FR", {
-        hour: "2-digit",
-        minute: "2-digit",
-        timeZone: "Europe/Paris",
-      });
-    }
-
-    return {
-      expectedArrivalTime,
-      minutesUntilArrival,
-      destination,
-      formattedTime,
-      vehicleRef,
-    };
-  });
+  // Sort by arrival time ascending
+  departures.sort(
+    (a, b) =>
+      new Date(a.expectedArrivalTime).getTime() -
+      new Date(b.expectedArrivalTime).getTime()
+  );
 
   const result = GetNextBusesResponse.parse({
-    departures,
-    stopName,
+    departures: departures.slice(0, 5),
+    stopName: "Place de la Résistance",
     lastUpdated: now.toISOString(),
   });
 
