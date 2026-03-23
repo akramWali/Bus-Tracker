@@ -14,3 +14,25 @@ import * as zod from "zod";
 export const HealthCheckResponse = zod.object({
   status: zod.string(),
 });
+
+/**
+ * Returns next bus 197 departures at Place de la Résistance
+ * @summary Get next bus departures
+ */
+export const GetNextBusesResponse = zod.object({
+  departures: zod.array(
+    zod.object({
+      expectedArrivalTime: zod.string().describe("ISO 8601 datetime string"),
+      minutesUntilArrival: zod
+        .number()
+        .describe("Minutes until arrival (can be negative if past)"),
+      destination: zod.string().describe("Final destination name"),
+      formattedTime: zod.string().describe("Arrival time formatted as HH:MM"),
+      vehicleRef: zod.string().describe("Vehicle reference ID"),
+    }),
+  ),
+  stopName: zod.string().describe("Name of the stop"),
+  lastUpdated: zod
+    .string()
+    .describe("ISO 8601 datetime string of when data was fetched"),
+});

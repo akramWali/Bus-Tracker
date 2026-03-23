@@ -48,6 +48,16 @@ Every package extends `tsconfig.base.json` which sets `composite: true`. The roo
 - `pnpm run build` — runs `typecheck` first, then recursively runs `build` in all packages that define it
 - `pnpm run typecheck` — runs `tsc --build --emitDeclarationOnly` using project references
 
+## Artifacts
+
+### `artifacts/bus-tracker` (`@workspace/bus-tracker`)
+
+React + Vite frontend for the Bus 197 tracker. Shows real-time departures at Place de la Résistance (Stop ID: `STIF:StopPoint:Q:43135:`), Line 197 (`STIF:Line::C01797:`). Auto-refreshes every 30 seconds.
+
+- Uses `useGetNextBuses` from `@workspace/api-client-react`
+- Backend API key stored as `IDFM_API_KEY` env var
+- Route: `GET /api/bus/next`
+
 ## Packages
 
 ### `artifacts/api-server` (`@workspace/api-server`)

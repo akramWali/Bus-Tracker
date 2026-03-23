@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Bus 197 Tracker"
+version = "1.0.0"
+id = "artifacts/bus-tracker"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 23529
+
+[services.development]
+run = "pnpm --filter @workspace/bus-tracker run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/bus-tracker", "run", "build" ]
+publicDir = "artifacts/bus-tracker/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23529"
+BASE_PATH = "/"

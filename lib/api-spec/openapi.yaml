@@ -1,6 +1,5 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
   description: API specification
@@ -10,6 +9,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: bus
+    description: Bus tracking operations
 paths:
   /healthz:
     get:
@@ -24,6 +25,25 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /bus/next:
+    get:
+      operationId: getNextBuses
+      tags: [bus]
+      summary: Get next bus departures
+      description: Returns next bus 197 departures at Place de la Résistance
+      responses:
+        "200":
+          description: List of upcoming bus departures
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NextBusesResponse"
+        "502":
+          description: Upstream API error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +53,51 @@ components:
           type: string
       required:
         - status
-
+    BusDeparture:
+      type: object
+      properties:
+        expectedArrivalTime:
+          type: string
+          description: ISO 8601 datetime string
+        minutesUntilArrival:
+          type: integer
+          description: Minutes until arrival (can be negative if past)
+        destination:
+          type: string
+          description: Final destination name
+        formattedTime:
+          type: string
+          description: Arrival time formatted as HH:MM
+        vehicleRef:
+          type: string
+          description: Vehicle reference ID
+      required:
+        - expectedArrivalTime
+        - minutesUntilArrival
+        - destination
+        - formattedTime
+        - vehicleRef
+    NextBusesResponse:
+      type: object
+      properties:
+        departures:
+          type: array
+          items:
+            $ref: "#/components/schemas/BusDeparture"
+        stopName:
+          type: string
+          description: Name of the stop
+        lastUpdated:
+          type: string
+          description: ISO 8601 datetime string of when data was fetched
+      required:
+        - departures
+        - stopName
+        - lastUpdated
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error

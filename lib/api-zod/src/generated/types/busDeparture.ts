@@ -5,9 +5,6 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-export interface HealthStatus {
-  status: string;
-}
 
 export interface BusDeparture {
   /** ISO 8601 datetime string */
@@ -20,16 +17,4 @@ export interface BusDeparture {
   formattedTime: string;
   /** Vehicle reference ID */
   vehicleRef: string;
-}
-
-export interface NextBusesResponse {
-  departures: BusDeparture[];
-  /** Name of the stop */
-  stopName: string;
-  /** ISO 8601 datetime string of when data was fetched */
-  lastUpdated: string;
-}
-
-export interface ErrorResponse {
-  error: string;
 }

@@ -1,0 +1,12 @@
+packages:
+  "framer-motion": "For smooth stagger animations and layout transitions of the bus schedule"
+  "date-fns": "For formatting the last updated timestamp safely and beautifully"
+
+images:
+  - path: "artifacts/bus-tracker/public/images/bg-navy-mesh.png"
+    description: "Abstract gradient mesh background in deep navy blue, dark indigo, and subtle cyan light leaks. Very modern, clean, dark mode aesthetic."
+    aspect_ratio: "16:9"
+
+notes:
+  - Using generated API hooks from @workspace/api-client-react
+  - Implementing refetchInterval for 30s auto-refresh

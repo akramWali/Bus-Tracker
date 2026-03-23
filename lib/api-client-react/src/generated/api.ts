@@ -13,7 +13,11 @@ import type {
   UseQueryResult,
 } from "@tanstack/react-query";
 
-import type { HealthStatus } from "./api.schemas";
+import type {
+  ErrorResponse,
+  HealthStatus,
+  NextBusesResponse,
+} from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
 import type { ErrorType } from "../custom-fetch";
@@ -92,6 +96,82 @@ export function useHealthCheck<
   request?: SecondParameter<typeof customFetch>;
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getHealthCheckQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * Returns next bus 197 departures at Place de la Résistance
+ * @summary Get next bus departures
+ */
+export const getGetNextBusesUrl = () => {
+  return `/api/bus/next`;
+};
+
+export const getNextBuses = async (
+  options?: RequestInit,
+): Promise<NextBusesResponse> => {
+  return customFetch<NextBusesResponse>(getGetNextBusesUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetNextBusesQueryKey = () => {
+  return [`/api/bus/next`] as const;
+};
+
+export const getGetNextBusesQueryOptions = <
+  TData = Awaited<ReturnType<typeof getNextBuses>>,
+  TError = ErrorType<ErrorResponse>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getNextBuses>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetNextBusesQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getNextBuses>>> = ({
+    signal,
+  }) => getNextBuses({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getNextBuses>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetNextBusesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getNextBuses>>
+>;
+export type GetNextBusesQueryError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Get next bus departures
+ */
+
+export function useGetNextBuses<
+  TData = Awaited<ReturnType<typeof getNextBuses>>,
+  TError = ErrorType<ErrorResponse>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getNextBuses>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetNextBusesQueryOptions(options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;
