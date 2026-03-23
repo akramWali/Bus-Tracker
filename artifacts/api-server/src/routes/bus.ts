@@ -5,7 +5,7 @@ const router: IRouter = Router();
 
 const LINE_ID = "STIF:Line::C01797:";
 const STOP_FILTER = "Résistance";
-const IDFM_API_URL = "https://prim.iledefrance-mobilites.fr/marketplace/estimated-timetable";
+const IDFM_API_URL = "https://prim.iledefrance-mobilites.fr/marketplace/requete-ligne";
 
 router.get("/bus/next", async (req, res) => {
   const apiKey = process.env["IDFM_API_KEY"];
