@@ -52,11 +52,13 @@ Every package extends `tsconfig.base.json` which sets `composite: true`. The roo
 
 ### `artifacts/bus-tracker` (`@workspace/bus-tracker`)
 
-React + Vite frontend for the Bus 197 tracker. Shows real-time departures at Place de la Résistance (Stop ID: `STIF:StopPoint:Q:43135:`), Line 197 (`STIF:Line::C01797:`). Auto-refreshes every 30 seconds.
+React + Vite frontend for the Bus 197 tracker. Shows real-time departures at Place de la Résistance - Charles de Gaulle (Bourg-la-Reine), Line 197 (`STIF:Line::C01217:`). Auto-refreshes every 30 seconds. Shows both directions: Porte d'Orléans (Paris) and Avenue Saint-Marc (Massy).
 
 - Uses `useGetNextBuses` from `@workspace/api-client-react`
 - Backend API key stored as `IDFM_API_KEY` env var
-- Route: `GET /api/bus/next`
+- Route: `GET /api/bus/next` returns `{ towardsPDO, towardsASM, stopName, lastUpdated }`
+- Stop IDs: Q:40334 (PDO direction), Q:40335 (ASM direction) — fallback when API doesn't return stop names
+- Primary API: `api.iledefrance-mobilites.fr` (returns StopPointName for filtering); Fallback: `prim.iledefrance-mobilites.fr` (uses hardcoded stop IDs)
 
 ## Packages
 

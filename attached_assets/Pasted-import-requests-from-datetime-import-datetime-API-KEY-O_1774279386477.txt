@@ -1,0 +1,60 @@
+import requests
+from datetime import datetime
+
+API_KEY = "OqqZ5tJtYMvnQt80zYjFc2AtMhDnWNaY"
+
+url = "https://prim.iledefrance-mobilites.fr/marketplace/requete-ligne"
+
+headers = {
+    "apikey": "OqqZ5tJtYMvnQt80zYjFc2AtMhDnWNaY"
+}
+
+params = {
+    "LineRef": "STIF:Line::C01217:"  # ligne 197
+}
+
+try:
+    response = requests.get(url, headers=headers, params=params, timeout=10)
+
+    if response.status_code != 200:
+        print("❌ Erreur HTTP :", response.status_code)
+    else:
+        data = response.json()
+
+        deliveries = data.get("Siri", {}).get("ServiceDelivery", {}).get("EstimatedTimetableDelivery", [])
+
+        print("\n🚌 Bus 197 - prochains passages à ton arrêt :\n")
+
+        count = 0
+
+        for delivery in deliveries:
+            frames = delivery.get("EstimatedJourneyVersionFrame", [])
+
+            for frame in frames:
+                journeys = frame.get("EstimatedVehicleJourney", [])
+
+                for journey in journeys:
+                    destination = journey.get("DestinationName", [{}])[0].get("value", "")
+
+                    calls = journey.get("EstimatedCalls", {}).get("EstimatedCall", [])
+
+                    for call in calls:
+                        stop_name = call.get("StopPointName", [{}])[0].get("value", "")
+
+                        # 🎯 filtre ton arrêt
+                        if "Résistance" in stop_name:
+                            time_str = call.get("ExpectedArrivalTime", "")
+
+                            # conversion heure
+                            if time_str:
+                                time_obj = datetime.fromisoformat(time_str.replace("Z", "+00:00"))
+                                heure = time_obj.strftime("%H:%M")
+
+                                print(f"{heure} → {destination}")
+
+                                count += 1
+                                if count >= 2:
+                                    exit()
+
+except Exception as e:
+    print("❌ Erreur :", e)

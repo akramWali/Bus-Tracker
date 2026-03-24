@@ -20,10 +20,15 @@ export interface BusDeparture {
   formattedTime: string;
   /** Vehicle reference ID */
   vehicleRef: string;
+  /** Direction code: PDO (Porte d'Orléans) or ASM (Avenue Saint-Marc) */
+  direction: string;
 }
 
 export interface NextBusesResponse {
-  departures: BusDeparture[];
+  /** Departures towards Porte d'Orléans */
+  towardsPDO: BusDeparture[];
+  /** Departures towards Avenue Saint-Marc (Massy) */
+  towardsASM: BusDeparture[];
   /** Name of the stop */
   stopName: string;
   /** ISO 8601 datetime string of when data was fetched */

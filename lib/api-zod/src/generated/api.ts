@@ -19,18 +19,26 @@ export const HealthCheckResponse = zod.object({
  * Returns next bus 197 departures at Place de la Résistance
  * @summary Get next bus departures
  */
+const BusDepartureSchema = zod.object({
+  expectedArrivalTime: zod.string().describe("ISO 8601 datetime string"),
+  minutesUntilArrival: zod
+    .number()
+    .describe("Minutes until arrival (can be negative if past)"),
+  destination: zod.string().describe("Final destination name"),
+  formattedTime: zod.string().describe("Arrival time formatted as HH:MM"),
+  vehicleRef: zod.string().describe("Vehicle reference ID"),
+  direction: zod
+    .string()
+    .describe("Direction code: PDO (Porte d'Orléans) or ASM (Avenue Saint-Marc)"),
+});
+
 export const GetNextBusesResponse = zod.object({
-  departures: zod.array(
-    zod.object({
-      expectedArrivalTime: zod.string().describe("ISO 8601 datetime string"),
-      minutesUntilArrival: zod
-        .number()
-        .describe("Minutes until arrival (can be negative if past)"),
-      destination: zod.string().describe("Final destination name"),
-      formattedTime: zod.string().describe("Arrival time formatted as HH:MM"),
-      vehicleRef: zod.string().describe("Vehicle reference ID"),
-    }),
-  ),
+  towardsPDO: zod
+    .array(BusDepartureSchema)
+    .describe("Departures towards Porte d'Orléans"),
+  towardsASM: zod
+    .array(BusDepartureSchema)
+    .describe("Departures towards Avenue Saint-Marc (Massy)"),
   stopName: zod.string().describe("Name of the stop"),
   lastUpdated: zod
     .string()

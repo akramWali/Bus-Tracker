@@ -71,19 +71,29 @@ components:
         vehicleRef:
           type: string
           description: Vehicle reference ID
+        direction:
+          type: string
+          description: "Direction code: PDO (Porte d'Orléans) or ASM (Avenue Saint-Marc)"
       required:
         - expectedArrivalTime
         - minutesUntilArrival
         - destination
         - formattedTime
         - vehicleRef
+        - direction
     NextBusesResponse:
       type: object
       properties:
-        departures:
+        towardsPDO:
           type: array
           items:
             $ref: "#/components/schemas/BusDeparture"
+          description: "Departures towards Porte d'Orléans"
+        towardsASM:
+          type: array
+          items:
+            $ref: "#/components/schemas/BusDeparture"
+          description: "Departures towards Avenue Saint-Marc (Massy)"
         stopName:
           type: string
           description: Name of the stop
@@ -91,7 +101,8 @@ components:
           type: string
           description: ISO 8601 datetime string of when data was fetched
       required:
-        - departures
+        - towardsPDO
+        - towardsASM
         - stopName
         - lastUpdated
     ErrorResponse:

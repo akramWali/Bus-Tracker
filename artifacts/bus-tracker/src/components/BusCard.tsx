@@ -45,11 +45,13 @@ export function BusCard({ departure, index }: BusCardProps) {
             <h3 className="font-display text-xl font-bold text-foreground truncate">
               {departure.destination}
             </h3>
-            <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
-              <span className="bg-secondary/50 px-2 py-0.5 rounded-md text-xs font-medium border border-border/50">
-                N° {departure.vehicleRef.substring(0, 8) || "Inconnu"}
-              </span>
-            </div>
+            {departure.vehicleRef && (
+              <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
+                <span className="bg-secondary/50 px-2 py-0.5 rounded-md text-xs font-medium border border-border/50">
+                  Course {departure.vehicleRef}
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
